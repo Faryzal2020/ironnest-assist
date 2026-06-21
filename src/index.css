@@ -1,0 +1,157 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+
+:root {
+  --color-bg-main: #111111;
+  --color-bg-panel: #222222;
+  --color-bg-input: #333333;
+  --color-text-main: #e8e8e8;
+  --color-text-dim: #888888;
+  --color-accent: #e53935;
+  --color-accent-hover: #ff5252;
+  --color-border: #444444;
+  --color-border-focus: #e8e8e8;
+  --color-grid-major: #555555;
+  --color-grid-minor: #333333;
+  
+  --font-main: 'JetBrains Mono', 'Courier New', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--color-bg-main);
+  color: var(--color-text-main);
+  font-family: var(--font-main);
+  font-size: 14px;
+  line-height: 1.5;
+  overflow: hidden; /* App is full screen */
+  text-transform: uppercase;
+}
+
+#root {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+h1, h2, h3, h4 {
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  letter-spacing: 1px;
+}
+
+button {
+  background-color: var(--color-bg-input);
+  color: var(--color-text-main);
+  border: 1px solid var(--color-border);
+  padding: 8px 12px;
+  font-family: var(--font-main);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.1s, border-color 0.1s;
+  text-transform: uppercase;
+  border-radius: 0 !important; /* NO ROUNDED CORNERS */
+}
+
+button:hover {
+  background-color: #444444;
+  border-color: var(--color-border-focus);
+}
+
+button.primary {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+button.primary:hover {
+  background-color: rgba(229, 57, 53, 0.1);
+  border-color: var(--color-accent-hover);
+  color: var(--color-accent-hover);
+}
+
+input, select {
+  background-color: var(--color-bg-input);
+  color: var(--color-text-main);
+  border: 1px solid var(--color-border);
+  padding: 6px 8px;
+  font-family: var(--font-main);
+  font-size: 14px;
+  width: 100%;
+  border-radius: 0 !important; /* NO ROUNDED CORNERS */
+  text-transform: uppercase;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--color-border-focus);
+}
+
+/* Layout Utilities */
+.panel {
+  background-color: var(--color-bg-panel);
+  border: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-header {
+  padding: 12px;
+  border-bottom: 1px solid var(--color-border);
+  background-color: #1a1a1a;
+  font-weight: bold;
+}
+
+.panel-content {
+  padding: 12px;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.flex-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.flex-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.text-accent {
+  color: var(--color-accent);
+}
+
+.text-dim {
+  color: var(--color-text-dim);
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border: 1px solid var(--color-text-dim);
+  font-size: 10px;
+  color: var(--color-text-dim);
+}
+
+.badge.resolved {
+  border-color: #4caf50;
+  color: #4caf50;
+}
+
+.badge.error {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.card {
+  border: 1px solid var(--color-border);
+  background-color: #1a1a1a;
+  padding: 12px;
+  margin-bottom: 12px;
+}
