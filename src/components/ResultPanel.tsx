@@ -1,91 +1,138 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useMission } from '../store/MissionContext';
 import { distanceBetween, bearingBetween } from '../utils/geometry';
 import { findFiringSolutions } from '../utils/ballistics';
 
 export const ResultPanel: React.FC = () => {
-  const { assets, targetId, setTargetId, gunId } = useMission();
+  const { assets, gunId } = useMission();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [checkedTargets, setCheckedTargets] = useState<string[]>([]);
 
   const gun = assets.find(a => a.id === gunId);
-  const target = assets.find(a => a.id === targetId);
 
-  // Exclude gun from target list
-  const validTargets = assets.filter(a => a.id !== gunId && a.resolvedPoint);
+  // Filter for 'Target' type assets that are resolved (and not the gun)
+  const validTargets = assets.filter(a => a.id !== gunId && a.type === 'Target' && a.resolvedPoint);
 
-  let content = null;
+  const handleSelectAll = () => {
+    if (checkedTargets.length === validTargets.length) {
+      setCheckedTargets([]); // Deselect all
+    } else {
+      setCheckedTargets(validTargets.map(t => t.id)); // Select all
+    }
+  };
+
+  const toggleTarget = (id: string) => {
+    if (checkedTargets.includes(id)) {
+      setCheckedTargets(checkedTargets.filter(tId => tId !== id));
+    } else {
+      setCheckedTargets([...checkedTargets, id]);
+    }
+  };
 
   if (!gun || !gun.resolvedPoint) {
-    content = <div className="text-accent">Error: Gun position not resolved.</div>;
-  } else if (!target) {
-    content = <div className="text-dim">Select a target to compute firing solution.</div>;
-  } else if (!target.resolvedPoint) {
-    content = <div className="text-accent">Error: Target position not resolved.</div>;
-  } else {
-    const dist = distanceBetween(gun.resolvedPoint, target.resolvedPoint);
-    const bearing = bearingBetween(gun.resolvedPoint, target.resolvedPoint);
-    const solutions = findFiringSolutions(dist);
-
-    content = (
-      <div className="flex-col">
-        <div style={{ padding: '8px', border: '1px solid var(--color-border)', backgroundColor: '#000' }}>
-          <div className="text-dim" style={{ fontSize: '10px' }}>
-            TARGET: {target.name} <br/>
-            EXACT: (X: {target.resolvedPoint.x.toFixed(3)}, Y: {target.resolvedPoint.y.toFixed(3)})
-          </div>
-          <div style={{ fontSize: '24px', margin: '8px 0' }}>
-            BEARING: {bearing.toFixed(1)}°
-          </div>
-          <div>DISTANCE: {dist.toFixed(2)} km</div>
-        </div>
-
-        {solutions.length === 0 ? (
-          <div className="text-accent" style={{ marginTop: '16px', border: '1px solid var(--color-accent)', padding: '8px' }}>
-            TARGET OUT OF RANGE OR ELEVATION ENVELOPE.
-          </div>
-        ) : (
-          <div style={{ marginTop: '16px' }}>
-            <div className="text-dim" style={{ marginBottom: '8px' }}>FIRING SOLUTIONS</div>
-            {solutions.map((sol, idx) => (
-              <div key={idx} style={{ 
-                border: idx === 0 ? '1px solid var(--color-text-main)' : '1px solid var(--color-border)', 
-                padding: '8px', 
-                marginBottom: '8px',
-                backgroundColor: idx === 0 ? '#222' : 'transparent'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <strong>CHARGE {sol.charge}</strong>
-                  {idx === 0 && <span className="text-accent" style={{ fontSize: '10px' }}>RECOMMENDED</span>}
-                </div>
-                <div style={{ display: 'flex', gap: '16px' }}>
-                  <div>
-                    <span className="text-dim" style={{ fontSize: '10px', display: 'block' }}>ELEVATION</span>
-                    {sol.elevation.toFixed(2)}°
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
+    return <div className="text-accent">Error: Gun position not resolved.</div>;
   }
+
+  const allSelected = validTargets.length > 0 && checkedTargets.length === validTargets.length;
 
   return (
     <div className="flex-col">
-      <div style={{ marginBottom: '16px' }}>
-        <label className="text-dim" style={{ display: 'block', marginBottom: '4px' }}>SELECT TARGET</label>
-        <select 
-          value={targetId || ''} 
-          onChange={e => setTargetId(e.target.value)}
+      {/* Target Selection Window */}
+      <div style={{ marginBottom: '16px', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg-panel)' }}>
+        <button 
+          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          style={{ width: '100%', textAlign: 'left', display: 'flex', justifyContent: 'space-between', border: 'none', borderBottom: isDropdownOpen ? '1px solid var(--color-border)' : 'none', padding: '8px' }}
         >
-          <option value="" disabled>-- SELECT TARGET --</option>
-          {validTargets.map(a => (
-            <option key={a.id} value={a.id}>{a.name}</option>
-          ))}
-        </select>
+          <span>SELECT TARGETS ({checkedTargets.length})</span>
+          <span>{isDropdownOpen ? '▲' : '▼'}</span>
+        </button>
+        
+        {isDropdownOpen && (
+          <div style={{ maxHeight: '200px', overflowY: 'auto', padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            {validTargets.length === 0 ? (
+              <div className="text-dim" style={{ fontSize: '12px' }}>No valid targets available.</div>
+            ) : (
+              <>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', borderBottom: '1px solid var(--color-grid-minor)', paddingBottom: '4px', marginBottom: '4px' }}>
+                  <input type="checkbox" checked={allSelected} onChange={handleSelectAll} style={{ width: 'auto', margin: 0 }} />
+                  <strong>SELECT ALL</strong>
+                </label>
+                {validTargets.map(t => (
+                  <label key={t.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={checkedTargets.includes(t.id)} 
+                      onChange={() => toggleTarget(t.id)}
+                      style={{ width: 'auto', margin: 0 }}
+                    />
+                    <span>{t.name}</span>
+                  </label>
+                ))}
+              </>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Firing Solutions */}
+      <div className="text-dim" style={{ marginBottom: '8px' }}>FIRING SOLUTIONS</div>
       
-      {content}
+      {checkedTargets.length === 0 && (
+        <div className="text-dim" style={{ fontSize: '12px' }}>No targets selected.</div>
+      )}
+
+      {checkedTargets.map(targetId => {
+        const target = validTargets.find(t => t.id === targetId);
+        if (!target || !target.resolvedPoint) return null; // Safety check
+
+        const dist = distanceBetween(gun.resolvedPoint!, target.resolvedPoint);
+        const bearing = bearingBetween(gun.resolvedPoint!, target.resolvedPoint);
+        const solutions = findFiringSolutions(dist);
+        
+        // Take only the lowest charge (which is the first one in the sorted list)
+        const bestSolution = solutions.length > 0 ? solutions[0] : null;
+
+        return (
+          <div key={target.id} style={{ border: '1px solid var(--color-border)', backgroundColor: '#000', marginBottom: '12px', padding: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px', borderBottom: '1px solid var(--color-border)', paddingBottom: '4px' }}>
+              <div>
+                <strong className="text-accent" style={{ fontSize: '16px' }}>{target.name}</strong>
+                <div className="text-dim" style={{ fontSize: '10px', marginTop: '2px' }}>
+                  EXACT: (X: {target.resolvedPoint.x.toFixed(3)}, Y: {target.resolvedPoint.y.toFixed(3)})
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '8px' }}>
+              <div>
+                <span className="text-dim" style={{ fontSize: '10px', display: 'block' }}>BEARING</span>
+                <span style={{ fontSize: '18px' }}>{bearing.toFixed(1)}°</span>
+              </div>
+              <div>
+                <span className="text-dim" style={{ fontSize: '10px', display: 'block' }}>DISTANCE</span>
+                <span style={{ fontSize: '18px' }}>{dist.toFixed(2)} km</span>
+              </div>
+            </div>
+
+            {!bestSolution ? (
+              <div className="text-accent" style={{ fontSize: '12px', borderTop: '1px dashed var(--color-border)', paddingTop: '8px' }}>
+                OUT OF RANGE OR ELEVATION ENVELOPE.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: '16px', borderTop: '1px dashed var(--color-border)', paddingTop: '8px' }}>
+                <div>
+                  <span className="text-dim" style={{ fontSize: '10px', display: 'block' }}>ELEVATION</span>
+                  <span style={{ fontSize: '20px', color: 'var(--color-text-main)', fontWeight: 'bold' }}>{bestSolution.elevation.toFixed(2)}°</span>
+                </div>
+                <div>
+                  <span className="text-dim" style={{ fontSize: '10px', display: 'block' }}>CHARGE</span>
+                  <span style={{ fontSize: '20px', color: 'var(--color-text-main)', fontWeight: 'bold' }}>{bestSolution.charge}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 };

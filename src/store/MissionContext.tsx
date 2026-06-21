@@ -7,8 +7,6 @@ interface MissionContextType {
   addAsset: (asset: Asset) => void;
   updateAsset: (asset: Asset) => void;
   removeAsset: (id: string) => void;
-  targetId: string | null;
-  setTargetId: (id: string | null) => void;
   gunId: string | null;
   setGunId: (id: string | null) => void;
 }
@@ -24,7 +22,6 @@ export const MissionProvider: React.FC<{ children: React.ReactNode }> = ({ child
       constraints: []
     }
   ]);
-  const [targetId, setTargetId] = useState<string | null>(null);
   const [gunId, setGunId] = useState<string | null>('gun-1');
 
   // Automatically resolve whenever assets change
@@ -36,7 +33,6 @@ export const MissionProvider: React.FC<{ children: React.ReactNode }> = ({ child
   
   const removeAsset = (id: string) => {
     setAssets(prev => prev.filter(a => a.id !== id));
-    if (targetId === id) setTargetId(null);
     if (gunId === id) setGunId(null);
   };
 
@@ -46,8 +42,6 @@ export const MissionProvider: React.FC<{ children: React.ReactNode }> = ({ child
       addAsset,
       updateAsset,
       removeAsset,
-      targetId,
-      setTargetId,
       gunId,
       setGunId
     }}>
